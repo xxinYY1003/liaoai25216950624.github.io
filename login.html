@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简购 - 登录注册</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑"; }
+        .container { width: 400px; margin: 50px auto; padding: 30px; border: 1px solid #eee; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .tab { display: flex; margin-bottom: 20px; }
+        .tab-item { flex: 1; text-align: center; height: 40px; line-height: 40px; cursor: pointer; font-size: 18px; }
+        .tab-item.active { color: #ff4400; border-bottom: 2px solid #ff4400; }
+        .form { display: none; }
+        .form.active { display: block; }
+        .form-item { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 5px; color: #666; }
+        .form-input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-input.error { border-color: red; }
+        .error-tip { color: red; font-size: 12px; margin-top: 5px; display: none; }
+        .submit-btn { width: 100%; height: 40px; background: #ff4400; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tab">
+            <div class="tab-item active" data-tab="login">登录</div>
+            <div class="tab-item" data-tab="register">注册</div>
+        </div>
+
+        <!-- 登录表单 -->
+        <form class="form active" id="loginForm">
+            <div class="form-item">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名">
+                <div class="error-tip" id="loginUserError">用户名不能为空</div>
+            </div>
+            <div class="form-item">
+                <label class="form-label">密码</label>
+                <input type="password" class="form-input" id="loginPwd" placeholder="请输入密码">
+                <div class="error-tip" id="loginPwdError">密码不能为空且不少于6位</div>
+            </div>
+            <button type="button" class="submit-btn" id="loginBtn">登录</button>
+        </form>
+
+        <!-- 注册表单 -->
+        <form class="form" id="registerForm">
+            <div class="form-item">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-input" id="regUsername" placeholder="请输入用户名">
+                <div class="error-tip" id="regUserError">用户名不能为空且不少于3位</div>
+            </div>
+            <div class="form-item">
+                <label class="form-label">密码</label>
+                <input type="password" class="form-input" id="regPwd" placeholder="请输入密码">
+                <div class="error-tip" id="regPwdError">密码不能为空且不少于6位</div>
+            </div>
+            <div class="form-item">
+                <label class="form-label">确认密码</label>
+                <input type="password" class="form-input" id="regPwdConfirm" placeholder="请再次输入密码">
+                <div class="error-tip" id="regPwdConfirmError">两次密码不一致</div>
+            </div>
+            <button type="button" class="submit-btn" id="regBtn">注册</button>
+        </form>
+    </div>
+
+    <script>
+        // 1. 标签切换
+        const tabItems = document.querySelectorAll('.tab-item');
+        const forms = document.querySelectorAll('.form');
+        tabItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const tab = item.dataset.tab;
+                // 切换标签样式
+                tabItems.forEach(t => t.classList.remove('active'));
+                item.classList.add('active');
+                // 切换表单
+                forms.forEach(form => {
+                    form.classList.remove('active');
+                    if (form.id === `${tab}Form`) {
+                        form.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 2. 表单校验通用方法
+        function showError(input, errorEle, msg) {
+            input.classList.add('error');
+            errorEle.textContent = msg;
+            errorEle.style.display = 'block';
+        }
+        function hideError(input, errorEle) {
+            input.classList.remove('error');
+            errorEle.style.display = 'none';
+        }
+
+        // 3. 登录逻辑
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.addEventListener('click', () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const pwd = document.getElementById('loginPwd').value.trim();
+            const userError = document.getElementById('loginUserError');
+            const pwdError = document.getElementById('loginPwdError');
+            let isValid = true;
+
+            // 校验用户名
+            if (!username) {
+                showError(document.getElementById('loginUsername'), userError, '用户名不能为空');
+                isValid = false;
+            } else {
+                hideError(document.getElementById('loginUsername'), userError);
+            }
+
+            // 校验密码
+            if (!pwd || pwd.length < 6) {
+                showError(document.getElementById('loginPwd'), pwdError, '密码不能为空且不少于6位');
+                isValid = false;
+            } else {
+                hideError(document.getElementById('loginPwd'), pwdError);
+            }
+
+            if (!isValid) return;
+
+            // 从本地存储获取用户信息
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.username === username && u.password === pwd);
+
+            if (user) {
+                // 保存登录状态
+                localStorage.setItem('loginUser', JSON.stringify(user));
+                alert('登录成功！');
+                window.location.href = 'index.html';
+            } else {
+                alert('用户名或密码错误！');
+            }
+        });
+
+        // 4. 注册逻辑
+        const regBtn = document.getElementById('regBtn');
+        regBtn.addEventListener('click', () => {
+            const username = document.getElementById('regUsername').value.trim();
+            const pwd = document.getElementById('regPwd').value.trim();
+            const pwdConfirm = document.getElementById('regPwdConfirm').value.trim();
+            const userError = document.getElementById('regUserError');
+            const pwdError = document.getElementById('regPwdError');
+            const pwdConfirmError = document.getElementById('regPwdConfirmError');
+            let isValid = true;
+
+            // 校验用户名
+            if (!username || username.length < 3) {
+                showError(document.getElementById('regUsername'), userError, '用户名不能为空且不少于3位');
+                isValid = false;
+            } else {
+                hideError(document.getElementById('regUsername'), userError);
+            }
+
+            // 校验密码
+            if (!pwd || pwd.length < 6) {
+                showError(document.getElementById('regPwd'), pwdError, '密码不能为空且不少于6位');
+                isValid = false;
+            } else {
+                hideError(document.getElementById('regPwd'), pwdError);
+            }
+
+            // 校验确认密码
+            if (pwdConfirm !== pwd) {
+                showError(document.getElementById('regPwdConfirm'), pwdConfirmError, '两次密码不一致');
+                isValid = false;
+            } else {
+                hideError(document.getElementById('regPwdConfirm'), pwdConfirmError);
+            }
+
+            if (!isValid) return;
+
+            // 检查用户名是否已存在
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const existUser = users.find(u => u.username === username);
+            if (existUser) {
+                showError(document.getElementById('regUsername'), userError, '用户名已存在');
+                return;
+            }
+
+            // 保存用户信息
+            users.push({ username, password: pwd });
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('注册成功！请登录');
+            // 切换到登录标签
+            tabItems[0].click();
+            // 清空注册表单
+            document.getElementById('registerForm').reset();
+        });
+    </script>
+</body>
+</html>
