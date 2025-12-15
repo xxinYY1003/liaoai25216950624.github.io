@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简购 - 购物车</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑"; }
+        .header { height: 60px; background: #ff4400; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
+        .logo { color: white; font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 20px; text-decoration: none; }
+
+        .cart-container { width: 1000px; margin: 30px auto; }
+        .cart-title { font-size: 22px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .cart-empty { text-align: center; padding: 50px; color: #999; font-size: 18px; }
+        .cart-table { width: 100%; border-collapse: collapse; }
+        .cart-table th, .cart-table td { border: 1px solid #eee; padding: 15px; text-align: center; }
+        .cart-table th { background: #f5f5f5; }
+        .cart-img { width: 80px; height: 80px; }
+        .cart-img img { width: 100%; height: 100%; object-fit: cover; }
+        .quantity-btn { width: 30px; height: 30px; border: 1px solid #eee; background: #fff; cursor: pointer; }
+        .quantity-input { width: 60px; height: 30px; text-align: center; border: 1px solid #eee; }
+        .del-btn { color: red; cursor: pointer; }
+        .cart-footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .total-price { font-size: 18px; color: #ff4400; font-weight: bold; }
+        .settle-btn { padding: 10px 30px; background: #ff4400; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">极简购</div>
+        <nav class="nav">
+            <a href="index.html">首页</a>
+            <a href="login.html">登录/注册</a>
+            <a href="cart.html">购物车</a>
+            <a href="user.html">个人中心</a>
+        </nav>
+    </header>
+
+    <div class="cart-container">
+        <h2 class="cart-title">我的购物车</h2>
+        <div id="cartEmpty" class="cart-empty" style="display: none;">
+            您的购物车为空，<a href="index.html" style="color: #ff4400;">去逛逛</a>
+        </div>
+        <table class="cart-table" id="cartTable">
+            <thead>
+                <tr>
+                    <th>商品图片</th>
+                    <th>商品名称</th>
+                    <th>单价</th>
+                    <th>数量</th>
+                    <th>小计</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="cartBody">
+                <!-- 购物车商品由JS动态渲染 -->
+            </tbody>
+        </table>
+        <div class="cart-footer">
+            <div class="total-price">总价：¥<span id="totalPrice">0</span></div>
+            <button class="settle-btn" id="settleBtn">去结算</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. 检查登录状态
+        function checkLogin() {
+            const loginUser = JSON.parse(localStorage.getItem('loginUser'));
+            if (!loginUser) {
+                if (confirm('请先登录！是否跳转到登录页？')) {
+                    window.location.href = 'login.html';
+                }
+                return false;
+            }
+            return true;
+        }
+
+        // 2. 渲染购物车
+        let cart = [];
+        function renderCart() {
+            if (!checkLogin()) return;
+            
+            cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartBody = document.getElementById('cartBody');
+            const cartEmpty = document.getElementById('cartEmpty');
+            const totalPriceEle = document.getElementById('totalPrice');
+
+            // 空购物车
+            if (cart.length === 0) {
+                cartTable.style.display = 'none';
+                cartEmpty.style.display = 'block';
+                return;
+            }
+
+            cartTable.style.display = 'table';
+            cartEmpty.style.display = 'none';
+
+            // 渲染购物车商品
+            cartBody.innerHTML = cart.map(item => `
+                <tr data-id="${item.id}">
+                    <td class="cart-img"><img src="${item.img}" alt="${item.name}"></td>
+                    <td>${item.name}</td>
+                    <td>¥${item.price}</td>
+                    <td>
+                        <button class="quantity-btn minus">-</button>
+                        <input type="text" class="quantity-input" value="${item.quantity}" readonly>
+                        <button class="quantity-btn plus">+</button>
+                    </td>
+                    <td class="subtotal">¥${item.price * item.quantity}</td>
+                    <td class="del-btn" onclick="deleteCartItem(${item.id})">删除</td>
+                </tr>
+            `).join('');
+
+            // 计算总价
+            calculateTotal();
+
+            // 数量加减事件
+            document.querySelectorAll('.minus').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tr = btn.closest('tr');
+                    const id = parseInt(tr.dataset.id);
+                    const quantityInput = tr.querySelector('.quantity-input');
+                    let quantity = parseInt(quantityInput.value);
+                    if (quantity > 1) {
+                        quantity--;
+                        quantityInput.value = quantity;
+                        // 更新购物车数据
+                        const item = cart.find(item => item.id === id);
+                        item.quantity = quantity;
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        // 更新小计
+                        tr.querySelector('.subtotal').textContent = `¥${item.price * quantity}`;
+                        // 重新计算总价
+                        calculateTotal();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.plus').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tr = btn.closest('tr');
+                    const id = parseInt(tr.dataset.id);
+                    const quantityInput = tr.querySelector('.quantity-input');
+                    let quantity = parseInt(quantityInput.value);
+                    quantity++;
+                    quantityInput.value = quantity;
+                    // 更新购物车数据
+                    const item = cart.find(item => item.id === id);
+                    item.quantity = quantity;
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    // 更新小计
+                    tr.querySelector('.subtotal').textContent = `¥${item.price * quantity}`;
+                    // 重新计算总价
+                    calculateTotal();
+                });
+            });
+        }
+
+        // 3. 计算总价
+        function calculateTotal() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('totalPrice').textContent = total;
+        }
+
+        // 4. 删除购物车商品
+        function deleteCartItem(id) {
+            if (confirm('确定要删除该商品吗？')) {
+                cart = cart.filter(item => item.id !== id);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+            }
+        }
+
+        // 5. 去结算
+        document.getElementById('settleBtn').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('购物车为空，无法结算！');
+                return;
+            }
+            // 跳转到订单页
+            window.location.href = 'order.html';
+        });
+
+        // 页面加载时渲染购物车
+        window.onload = renderCart;
+    </script>
+</body>
+</html>
