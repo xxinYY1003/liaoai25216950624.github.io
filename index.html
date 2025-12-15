@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>廖蔼 - 首页</title>
+    <style>
+        /* 基础样式重置 */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑"; }
+        a { text-decoration: none; color: #333; }
+        ul { list-style: none; }
+
+        /* 头部导航 */
+        .header { height: 60px; background: #ff4400; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
+        .logo { color: white; font-size: 24px; font-weight: bold; }
+        .nav a { color: white; margin-left: 20px; }
+        .search-box { display: flex; align-items: center; }
+        .search-input { height: 36px; padding: 0 10px; border: none; border-radius: 4px 0 0 4px; width: 280px; }
+        .search-btn { height: 36px; width: 80px; border: none; background: #fff; color: #ff4400; font-weight: bold; border-radius: 0 4px 4px 0; cursor: pointer; }
+
+        /* 轮播图 */
+        .carousel { width: 100%; height: 350px; overflow: hidden; position: relative; }
+        .carousel-list { display: flex; width: 300%; height: 100%; transition: transform 0.5s ease; }
+        .carousel-item { width: 100%; height: 100%; }
+        .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
+        .carousel-dots { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; }
+        .dot.active { background: white; }
+
+        /* 商品分类 */
+        .category { padding: 20px; background: #f5f5f5; }
+        .category-title { font-size: 20px; margin-bottom: 15px; color: #333; }
+        .category-list { display: flex; gap: 20px; flex-wrap: wrap; }
+        .category-item { width: 80px; text-align: center; }
+        .category-item img { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 5px; }
+
+        /* 商品列表 */
+        .goods { padding: 20px; }
+        .goods-title { font-size: 20px; margin-bottom: 15px; color: #333; }
+        .goods-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .goods-item { border: 1px solid #eee; border-radius: 8px; padding: 15px; transition: box-shadow 0.3s; }
+        .goods-item:hover { box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .goods-img { width: 100%; height: 200px; margin-bottom: 10px; }
+        .goods-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+        .goods-name { font-size: 16px; margin-bottom: 5px; }
+        .goods-price { color: #ff4400; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .add-cart { width: 100%; height: 36px; background: #ff4400; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .search-input { width: 180px; }
+            .carousel { height: 200px; }
+            .goods-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <header class="header">
+        <div class="logo">廖蔼</div>
+        <nav class="nav">
+            <a href="index.html">首页</a>
+            <a href="login.html">登录/注册</a>
+            <a href="cart.html">购物车</a>
+            <a href="user.html">个人中心</a>
+        </nav>
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="请输入商品名称搜索">
+            <button class="search-btn">搜索</button>
+        </div>
+    </header>
+
+    <!-- 轮播图 -->
+    <div class="carousel">
+        <div class="carousel-list">
+            <div class="carousel-item"><img src="images/mianbei.jpg" alt="轮播图1"></div>
+            <div class="carousel-item"><img src="images/lunbotu8.jpg" alt="轮播图2"></div>
+            <div class="carousel-item"><img src="images/lunbotu9.jpg" alt="轮播图3"></div>
+        </div>
+        <div class="carousel-dots">
+            <span class="dot active" data-index="0"></span>
+            <span class="dot" data-index="1"></span>
+            <span class="dot" data-index="2"></span>
+        </div>
+    </div>
+
+    <!-- 商品分类 -->
+    <section class="category">
+        <h2 class="category-title">商品分类</h2>
+        <div class="category-list">
+            <div class="category-item">
+                <img src="images/dianzichanpin.jpg" alt="电子产品">
+                <p>电子产品</p>
+            </div>
+            <div class="category-item">
+                <img src="images/fuzhuang.jpg" alt="服装鞋帽">
+                <p>服装鞋帽</p>
+            </div>
+            <div class="category-item">
+                <img src="images/shipin.jpg" alt="食品生鲜">
+                <p>食品生鲜</p>
+            </div>
+            <div class="category-item">
+                <img src="images/jiaju.jpg" alt="家居用品">
+                <p>家居用品</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 商品列表 -->
+    <section class="goods">
+        <h2 class="goods-title">热门商品</h2>
+        <div class="goods-list" id="goodsList">
+            <!-- 商品项由JS动态渲染 -->
+        </div>
+    </section>
+
+    <script>
+        // 1. 轮播图逻辑
+        const carouselList = document.querySelector('.carousel-list');
+        const dots = document.querySelectorAll('.dot');
+        let currentIndex = 0;
+
+        // 切换轮播图
+        function switchCarousel(index) {
+            currentIndex = index;
+            carouselList.style.transform = `translateX(-${index * 100 / 3}%)`;
+            dots.forEach(dot => dot.classList.remove('active'));
+            dots[index].classList.add('active');
+        }
+
+        // 点击圆点切换
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                switchCarousel(parseInt(dot.dataset.index));
+            });
+        });
+
+        // 自动轮播
+        setInterval(() => {
+            currentIndex = (currentIndex + 1) % 3;
+            switchCarousel(currentIndex);
+        }, 3000);
+
+        // 2. 商品数据（模拟JSON）
+        const goodsData = [
+            { id: 1, name: "小米14 智能手机", price: 3999, img: "images/xiaomi.jpg" },
+            { id: 2, name: "纯棉短袖T恤", price: 89, img: "images/tixu1.jpg" },
+            { id: 3, name: "进口车厘子500g", price: 69, img: "images/chelizi.jpg" },
+            { id: 4, name: "北欧风收纳柜", price: 199, img: "images/shounagui.jpg" }
+        ];
+
+        // 3. 渲染商品列表
+        const goodsList = document.getElementById('goodsList');
+        function renderGoods() {
+            goodsList.innerHTML = goodsData.map(good => `
+                <div class="goods-item">
+                    <div class="goods-img"><img src="${good.img}" alt="${good.name}"></div>
+                    <h3 class="goods-name">${good.name}</h3>
+                    <p class="goods-price">¥${good.price}</p>
+                    <button class="add-cart" onclick="addToCart(${good.id})">加入购物车</button>
+                </div>
+            `).join('');
+        }
+        renderGoods();
+
+        // 4. 加入购物车功能
+        function addToCart(goodsId) {
+            const goods = goodsData.find(item => item.id === goodsId);
+            if (!goods) return;
+
+            // 从本地存储获取购物车
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existItem = cart.find(item => item.id === goodsId);
+
+            if (existItem) {
+                existItem.quantity += 1; // 数量+1
+            } else {
+                cart.push({ ...goods, quantity: 1 }); // 新增商品
+            }
+
+            // 保存到本地存储
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert('加入购物车成功！');
+        }
+
+        // 5. 搜索功能
+        const searchBtn = document.querySelector('.search-btn');
+        const searchInput = document.querySelector('.search-input');
+        searchBtn.addEventListener('click', () => {
+            const keyword = searchInput.value.trim().toLowerCase();
+            if (!keyword) {
+                renderGoods(); // 清空搜索词显示全部
+                return;
+            }
+            // 过滤商品
+            const filteredGoods = goodsData.filter(item => 
+                item.name.toLowerCase().includes(keyword)
+            );
+            goodsList.innerHTML = filteredGoods.map(good => `
+                <div class="goods-item">
+                    <div class="goods-img"><img src="${good.img}" alt="${good.name}"></div>
+                    <h3 class="goods-name">${good.name}</h3>
+                    <p class="goods-price">¥${good.price}</p>
+                    <button class="add-cart" onclick="addToCart(${good.id})">加入购物车</button>
+                </div>
+            `).join('');
+            if (filteredGoods.length === 0) {
+                goodsList.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">未找到相关商品</p>';
+            }
+        });
+    </script>
+</body>
+</html>
